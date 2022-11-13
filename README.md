@@ -1,34 +1,108 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Testing Nextjs 13
 
-## Getting Started
+## project setup
 
-First, run the development server:
+### create-next-app
+
+[docs](https://beta.nextjs.org/docs/getting-started#automatic-installation)
 
 ```bash
-npm run dev
-# or
-yarn dev
+npx create-next-app@latest --experimental-app
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Tailwind
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+[docs](https://beta.nextjs.org/docs/styling/tailwind-css)
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+step 1
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+```bash
+npm i -D tailwindcss@latest postcss@latest autoprefixer@latest
+```
 
-## Learn More
+step 2
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx tailwindcss init -p
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+step 3: configure tailwind in `tailwind.config.js`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+```js
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx}", // Note the addition of the `app` directory.
+    "./pages/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+```
 
-## Deploy on Vercel
+step 4: add tailwind directives to `app/global.css`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+### Prisma
+
+[docs](https://www.prisma.io/docs/getting-started/quickstart)
+
+step 1: install prisma
+
+```bash
+npm i prisma -D
+```
+
+step 2: init prisma
+
+```bash
+npx prisma init --datasource-provider sqlite
+```
+
+step 3: modify `schema.prisma`
+
+```prisma
+model Todo {
+  id        String  @id @default(cuid())
+  content   String
+  completed Boolean @default(false)
+}
+```
+
+step 4: run prisma migrate
+
+```bash
+npx prisma migrate dev --name init
+```
+
+step 5: create `lib/db.ts` to export prisma client
+
+```ts
+import { PrismaClient } from '@prisma/client'
+
+declare global {
+  // allow global `var` declarations
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined
+}
+
+export const prisma =
+  global.prisma ||
+  new PrismaClient({
+    log: ['query'],
+  })
+
+if (process.env.NODE_ENV !== 'production') global.prisma = prisma
+```
+
+## A very useful example of a nextjs 13 app
+
+[example](https://github.com/shadcn/taxonomy)
